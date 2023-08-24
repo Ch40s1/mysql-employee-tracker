@@ -205,7 +205,7 @@ function addRole() {
       // Insert the new role data into the role table
       dbConnection.query('INSERT INTO role (id, title, department_name, salary) VALUES (?, ?, ?, ?)', [roleId, roleTitle, roleDepartment, roleSalary,], (err, result) => {
         if (err) throw err;
-        console.log(`Role "${roleTitle}" with ID ${roleId} added successfully!`);
+        //console.log(`Role "${roleTitle}" with ID ${roleId} added successfully!`);
         startApp();
       });
     });
@@ -213,11 +213,79 @@ function addRole() {
 
 function addEmployee() {
   inquirer
-  .prompt([
-    {
-    }
-  ])
+    .prompt([
+      {
+        name: 'employeeId',
+        type: 'input',
+        validate: input => {
+          if (Number.isInteger(parseInt(input)) && parseInt(input) > 0) {
+            return true;
+          }
+          return 'Please enter a valid positive integer for the ID.';
+        }
+      },
+      {
+        name: 'employeeFirstName',
+        type: 'input',
+        message: 'Enter the employee first name:',
+        validate: input => {
+          if (input.trim() !== '') {
+            return true;
+          }
+          return 'Please enter a valid first name.';
+        }
+      },
+      {
+        name: 'employeeLastName',
+        type: 'input',
+        message: 'Enter the employee last name:',
+        validate: input => {
+          if (input.trim() !== '') {
+            return true;
+          }
+          return 'Please enter a valid last name.';
+        }
+      },
+      {
+        name: 'employeeRole',
+        type: 'input',
+        message: 'Enter the employee\'s role ID:',
+        validate: input => {
+          if (Number.isInteger(parseInt(input)) && parseInt(input) > 0) {
+            return true;
+          }
+          return 'Please enter a valid positive integer for the role ID.';
+        }
+      },
+      {
+        name: 'employeeManager',
+        type: 'input',
+        message: 'Enter the manager\'s name:',
+        validate: input => {
+          if (input.trim() !== '') {
+            return true;
+          }
+          return 'Please enter a name.';
+        }
+      }
+    ])
+    .then(answers => {
+      const employeeId = parseInt(answers.employeeId);
+      const employeeFirstName = answers.employeeFirstName;
+      const employeeLastName = answers.employeeLastName;
+      const employeeRole = parseInt(answers.employeeRole);
+      const employeeManager = answers.employeeManager;
+
+      // Insert the new employee data into the employee table
+      dbConnection.query('INSERT INTO employee (id, first_name, last_name, role_id, manager_name) VALUES (?, ?, ?, ?, ?)', [employeeId, employeeFirstName, employeeLastName, employeeRole, employeeManager], (err, result) => {
+        if (err) throw err;
+        console.log(`Employee "${employeeFirstName} ${employeeLastName}" with ID ${employeeId} added successfully!`);
+        startApp();
+      });
+    });
 }
+
+
 
 function updateEmployeeRole() {
 

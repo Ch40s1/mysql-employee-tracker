@@ -13,10 +13,10 @@ VALUES
 (4, 'Accountant', 'Finace', 100000),
 (5, 'Lawyer', 'Legal', 130000);
 
-INSERT INTO employee (id, first_name, last_name, role_id, manager_id)
+INSERT INTO employee (id, first_name, last_name, role_id, manager_name)
 VALUES
 (1, 'John', 'Doe', 1, null),
-(2, 'Jane', 'Smith', 2, 1),
-(3, 'Michael', 'Johnson', 3, 1),
-(4, 'Emily', 'Williams', 4, 2),
-(5, 'David', 'Brown', 5, 2);
+(2, 'Jane', 'Smith', 2, 'dan'),
+(3, 'Michael', 'Johnson', 3, 'dan'),
+(4, 'Emily', 'Williams', 4, 'dan'),
+(5, 'David', 'Brown', 5, 'dan');
