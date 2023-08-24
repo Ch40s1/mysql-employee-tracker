@@ -2,6 +2,7 @@ const fs = require('fs');
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
 const config = require('./config');
+const { table } = require('console');
 
 // Create a database connection
 const dbConnection = mysql.createConnection(config.database);
@@ -72,11 +73,36 @@ function viewAllDepartments() {
 }
 
 function viewAllRoles() {
+  dbConnection.query('SELECT * FROM role', (err, results) => {
+    if (err) throw err;
+    console.table(results.map(result => ({
+      id: result.id,
+      title: result.title,
+      department_name: result.department_name,
+      salary: result.salary
+    })));
 
+    // Start the app again
+    startApp();
+  });
 }
 
-function viewAllEmployees() {
 
+function viewAllEmployees() {
+  dbConnection.query('SELECT * FROM employee', (err, results) => {
+    if (err) throw err;
+
+    console.table(results.map(result => ({
+      id: result.id,
+      first_name: result.first_name,
+      last_name: result.last_name,
+      role_id: result.role_id,
+      manager_id: result.manager_id
+    })));
+
+    // Start the app again
+    startApp();
+  });
 }
 
 function addDepartment() {
