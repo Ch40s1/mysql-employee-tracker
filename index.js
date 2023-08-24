@@ -108,51 +108,115 @@ function viewAllEmployees() {
 function addDepartment() {
   // asks questions needed for the values
   inquirer
-  .prompt([
-    {
-      name: 'departmentId',
-      type: 'input',
-      message: 'Enter the department ID:',
-      // makes sure that the id is a converted into an integer and if we typed a valid id number
-      validate: input => {
-        if (Number.isInteger(parseInt(input)) && parseInt(input) > 0) {
-          return true;
+    .prompt([
+      {
+        name: 'departmentId',
+        type: 'input',
+        message: 'Enter the department ID:',
+        // makes sure that the id is a converted into an integer and if we typed a valid id number
+        validate: input => {
+          if (Number.isInteger(parseInt(input)) && parseInt(input) > 0) {
+            return true;
+          }
+          return 'Please enter a valid positive integer for the department ID.';
         }
-        return 'Please enter a valid positive integer for the department ID.';
-      }
-    },
-    {
-      name: 'departmentName',
-      type: 'input',
-      message: 'Enter the name of the department:',
-      // makes sure there is no empty string
-      validate: input => {
-        if (input.trim() !== '') {
-          return true;
+      },
+      {
+        name: 'departmentName',
+        type: 'input',
+        message: 'Enter the name of the department:',
+        // makes sure there is no empty string
+        validate: input => {
+          if (input.trim() !== '') {
+            return true;
+          }
+          return 'Please enter a valid department name.';
         }
-        return 'Please enter a valid department name.';
       }
-    }
-  ])
-  .then(answers => {
-    const departmentId = parseInt(answers.departmentId);
-    const departmentName = answers.departmentName;
+    ])
+    .then(answers => {
+      const departmentId = parseInt(answers.departmentId);
+      const departmentName = answers.departmentName;
 
-    // acts like the seeds,sql and adds the values to the data
-    dbConnection.query('INSERT INTO department (id, department_name) VALUES (?, ?)', [departmentId, departmentName], (err, result) => {
-      if (err) throw err;
-      console.log(`Department "${departmentName}" with ID ${departmentId} added successfully!`);
-      startApp();
+      // acts like the seeds,sql and adds the values to the data
+      dbConnection.query('INSERT INTO department (id, department_name) VALUES (?, ?)', [departmentId, departmentName], (err, result) => {
+        if (err) throw err;
+        console.log(`Department "${departmentName}" with ID ${departmentId} added successfully!`);
+        startApp();
+      });
     });
-  });
 }
 
 function addRole() {
+  // Ask questions to gather role information
+  inquirer
+    .prompt([
+      {
+        name: 'roleId',
+        type: 'input',
+        message: 'Enter the role ID:',
+        validate: input => {
+          if (Number.isInteger(parseInt(input)) && parseInt(input) > 0) {
+            return true;
+          }
+          return 'Please enter a valid positive integer for the role ID.';
+        }
+      },
+      {
+        name: 'roleTitle',
+        type: 'input',
+        message: 'Enter the title of the role:',
+        validate: input => {
+          if (input.trim() !== '') {
+            return true;
+          }
+          return 'Please enter a valid role title.';
+        }
+      },
+      {
+        name: 'roleDepartment',
+        type: 'input',
+        message: 'Enter the department name for the role:',
+        validate: input => {
+          if (input.trim() !== '') {
+            return true;
+          }
+          return 'Please enter a valid department name.';
+        }
+      },
+      {
+        name: 'roleSalary',
+        type: 'input',
+        message: 'Enter the salary for the role:',
+        validate: input => {
+          if (!isNaN(parseFloat(input)) && parseFloat(input) >= 0) {
+            return true;
+          }
+          return 'Please enter a valid non-negative number for the salary.';
+        }
+      }
+    ])
+    .then(answers => {
+      const roleId = parseInt(answers.roleId);
+      const roleTitle = answers.roleTitle;
+      const roleSalary = parseFloat(answers.roleSalary);
+      const roleDepartment = answers.roleDepartment;
 
+      // Insert the new role data into the role table
+      dbConnection.query('INSERT INTO role (id, title, department_name, salary) VALUES (?, ?, ?, ?)', [roleId, roleTitle, roleDepartment, roleSalary,], (err, result) => {
+        if (err) throw err;
+        console.log(`Role "${roleTitle}" with ID ${roleId} added successfully!`);
+        startApp();
+      });
+    });
 }
 
 function addEmployee() {
-
+  inquirer
+  .prompt([
+    {
+    }
+  ])
 }
 
 function updateEmployeeRole() {
