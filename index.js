@@ -6,63 +6,88 @@ const config = require('./config');
 // Create a database connection
 const dbConnection = mysql.createConnection(config.database);
 
-// Function to view all departments
-function viewAllDepartments() {
-  dbConnection.query('SELECT * FROM department', (error, results) => {
-    if (error) {
-      console.error('Error fetching departments:', error);
-      return;
-    }
-
-    const formattedResults = results.map((department) => {
-      return {
-        id: department.id,
-        department_name: department.department_name,
-      };
+// function to start app
+function startApp() {
+  inquirer
+    .prompt({
+      name: 'action',
+      type: 'list',
+      message: 'What would you like to do?',
+      choices: [
+        'View all departments',
+        'View all roles',
+        'View all employees',
+        'Add a department',
+        'Add a role',
+        'Add an employee',
+        'Update an employee role',
+        'Exit'
+      ]
+    })
+    // different cases for each answer
+    .then(answer => {
+      switch (answer.action) {
+        case 'View all departments':
+          viewAllDepartments();
+          break;
+        case 'View all roles':
+          viewAllRoles();
+          break;
+        case 'View all employees':
+          viewAllEmployees();
+          break;
+        case 'Add a department':
+          addDepartment();
+          break;
+        case 'Add a role':
+          addRole();
+          break;
+        case 'Add an employee':
+          addEmployee();
+          break;
+        case 'Update an employee role':
+          updateEmployeeRole();
+          break;
+        case 'Exit':
+          console.log('Goodbye!');
+          process.exit();
+      }
     });
+}
 
-    console.log('All Departments:');
-    console.table(formattedResults);
-
+function viewAllDepartments() {
+  // creates a connection to mysql. selects all from departments
+  dbConnection.query('SELECT * FROM department', (err, results) => {
+    if (err) throw err;
+    console.table(results);
+    // restarts the app
     startApp();
   });
 }
 
-function addDepartment(){
+function viewAllRoles() {
+
 }
 
-// Function to start the application
-function startApp() {
-  const initialQuestions = [
-    {
-      type: "list",
-      name: "userChoice",
-      message: 'What would you like to do?',
-      choices: ['View All Departments', "Add Department",'Quit']
-    },
-  ];
+function viewAllEmployees() {
 
-  inquirer
-    .prompt(initialQuestions)
-    .then((answer) => {
-      switch (answer.userChoice) {
-        case 'View All Departments':
-          viewAllDepartments();
-          break;
-        case 'Add Department':
-          addDepartment();
-          break;
-        case 'Quit':
-          console.log('Goodbye!');
-          dbConnection.end();
-          break;
-      }
-    })
-    .catch((error) => {
-      console.error('An error occurred:', error);
-      dbConnection.end();
-    });
 }
 
-// Start the application
+function addDepartment() {
+
+}
+
+function addRole() {
+
+}
+
+function addEmployee() {
+
+}
+
+function updateEmployeeRole() {
+
+}
+
+// Call the function to start the application
 startApp();

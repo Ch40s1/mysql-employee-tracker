@@ -3,4 +3,4 @@ VALUES
 (1, 'Sales'),
 (2, 'Legal'),
 (3, 'Finance'),
-(4, 'Engineering')
+(4, 'Engineering');
