@@ -2,7 +2,7 @@ const fs = require('fs');
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
 const config = require('./config');
-const { table } = require('console');
+const cTable = require('console.table');
 
 // Create a database connection
 const dbConnection = mysql.createConnection(config.database);
@@ -80,11 +80,26 @@ function startApp() {
 }
 
 function viewAllDepartments() {
-  // creates a connection to the mysql server and selects all from the department in employee.db
-  dbConnection.query('SELECT * FROM department', (err, results) => {
-    if (err) throw err;
-      console.table(results);
-    // starts the app again
+  // Query to select all departments from the 'department' table
+  const query = 'SELECT * FROM department';
+
+  // Execute the query
+  dbConnection.query(query, (err, results) => {
+    if (err) {
+      console.error(err); // Log the error
+      return;
+    }
+
+    // Display the departments using console.table
+    console.table(results);
+
+    // Assuming you want to perform some further actions after displaying the results
+    // You can call another function here or handle any other logic
+
+    // Close the database connection if needed
+    // dbConnection.end();
+
+    // If you want to continue the application flow, you can call another function or exit appropriately
     startApp();
   });
 }
