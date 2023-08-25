@@ -49,6 +49,8 @@ n/a
 * The app enables users to manage roles and departments within the company. This includes adding new roles and departments, as well as modifying existing ones.
 * Users can view and update various details related to employees, including their roles, departments, salaries, and managers. This simplifies the process of keeping employee records accurate and up to date.
 
+<img src="./images/banner.png" alt="Terminal Banner" width="500" height="200">
+
 # Contributors
 
 ASK BCS - (tutor and help):

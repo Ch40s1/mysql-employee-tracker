@@ -30,9 +30,11 @@ function startApp() {
         'View all roles',
         'View all employees',
         'Add a department',
-        'Delete a Role',
         'Add a role',
         'Add an employee',
+        'Delete a Role',
+        // 'Delete an employee',
+        // 'Delete a department',
         'Update an employee role',
         'Exit'
       ]
@@ -61,6 +63,12 @@ function startApp() {
         case 'Add an employee':
           addEmployee();
           break;
+        // case 'Delete an employee':
+        //   deleteEmployee();
+        //   break;
+        // case 'Delete a department':
+        //   deleteDepartment();
+        //   break;
         case 'Update an employee role':
           updateEmployeeRole();
           break;
@@ -267,22 +275,24 @@ function deleteRole() {
 
 
 function addEmployee() {
-  // these are predefined managers
+  // These are predefined managers
   const predefinedManagers = [
     'Robert Blo',
     'Doe Jane',
     'Chris Doe',
   ];
-  // sql retrives manager names from the employee table
+
+  // SQL retrieves manager names from the employee table
   const managerQuery = 'SELECT DISTINCT manager_name FROM employee WHERE manager_name IS NOT NULL';
 
-  // gets existing manager names from the database
+  // Gets existing manager names from the database
   dbConnection.query(managerQuery, (err, managerResults) => {
     if (err) throw err;
-    // take existing manager names from the query results
+    // Take existing manager names from the query results
     const databaseManagers = managerResults.map(result => result.manager_name);
     const allManagers = [...predefinedManagers, ...databaseManagers];
-    // combine managers and database managers
+
+    // Query to retrieve all roles
     const roleQuery = 'SELECT * FROM role';
     dbConnection.query(roleQuery, (err, roles) => {
       if (err) throw err;
@@ -312,17 +322,10 @@ function addEmployee() {
             }
           },
           {
-            name: 'employeeRoleId',
-            type: 'input',
-            message: 'Enter the employee\'s role ID:',
-            validate: input => {
-              const roleId = parseInt(input);
-              const validRole = roles.find(role => role.id === roleId);
-              if (validRole) {
-                return true;
-              }
-              return 'Please enter a valid role ID.';
-            }
+            name: 'employeeRole',
+            type: 'list', // Change type to 'list' for selection from a list
+            message: 'Select the employee\'s role:',
+            choices: roles.map(role => ({ name: role.title, value: role.id })) // Mapping roles to choices
           },
           {
             name: 'employeeManager',
@@ -332,36 +335,36 @@ function addEmployee() {
           }
         ])
         .then(answer => {
-          // extract user info
+          // Extract user info
           const employeeFirstName = answer.employeeFirstName;
           const employeeLastName = answer.employeeLastName;
-          const employeeRoleId = parseInt(answer.employeeRoleId);
+          const employeeRoleId = parseInt(answer.employeeRole); // Using the selected role ID
           const employeeManager = answer.employeeManager;
 
-          // fing the selected role based on the provided role id
+          // Find the selected role based on the provided role id
           const selectedRole = roles.find(role => role.id === employeeRoleId);
 
-          // get info about the selected role
+          // Get info about the selected role
           const role_id = selectedRole.id;
           const title = selectedRole.title;
           const department_name = selectedRole.department_name;
           const salary = selectedRole.salary;
 
-          // query to retrieve the maximum employee id from tthe employee table
+          // Query to retrieve the maximum employee id from the employee table
           const maxEmployeeIdQuery = 'SELECT MAX(id) as maxEmployeeId FROM employee';
           dbConnection.query(maxEmployeeIdQuery, (err, maxEmployeeIdResult) => {
             if (err) throw err;
 
-            //calculate the new employee id based on the maximum emplyee id
+            // Calculate the new employee id based on the maximum employee id
             const maxEmployeeId = maxEmployeeIdResult[0].maxEmployeeId;
             const newEmployeeId = maxEmployeeId + 1;
 
-            // insert the new emplyee information into the employee table
+            // Insert the new employee information into the employee table
             dbConnection.query('INSERT INTO employee (id, first_name, last_name, role_id, manager_name) VALUES (?, ?, ?, ?, ?)', [newEmployeeId, employeeFirstName, employeeLastName, role_id, employeeManager], (err, result) => {
               if (err) throw err;
 
-              // display a success message and the information of the new employee
-              console.log(`Employee "${employeeFirstName} ${employeeLastName}" added successfully!\n`);
+              // Display a success message and the information of the new employee
+              console.log("Employee added");
               console.table([{
                 id: newEmployeeId,
                 first_name: employeeFirstName,
@@ -379,6 +382,7 @@ function addEmployee() {
     });
   });
 }
+
 
 function updateEmployeeRole() {
   const employeeQuery = 'SELECT id, first_name, last_name FROM employee';
@@ -426,7 +430,5 @@ function updateEmployeeRole() {
     });
   });
 }
-
-
 // Call the function to start the application
 startApp();
