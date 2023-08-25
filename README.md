@@ -12,6 +12,7 @@ This Employee Management App is a command-line application built using Node.js, 
 * [License](#license)
 * [Tests](#tests)
 * [Features](#features)
+* [Contributors](#contributors)
 * [Questions](#questions)
 
 ## Installation
@@ -47,6 +48,11 @@ n/a
 * The app utilizes the Inquirer package (version 8.2.4) to create an interactive and intuitive command-line interface. This makes it easy for both technical and non-technical users to navigate and perform database operations.
 * The app enables users to manage roles and departments within the company. This includes adding new roles and departments, as well as modifying existing ones.
 * Users can view and update various details related to employees, including their roles, departments, salaries, and managers. This simplifies the process of keeping employee records accurate and up to date.
+
+# Contributors
+
+ASK BCS - (tutor and help):
+They helped massively. Helped with mysql debugging and function errors.
 
 ## Questions
 Github: https://github.com/Ch40s1
