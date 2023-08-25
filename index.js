@@ -7,6 +7,17 @@ const { table } = require('console');
 // Create a database connection
 const dbConnection = mysql.createConnection(config.database);
 
+console.log(
+`
+  ####### #     # ######  #       ####### #     # ####### #######    #     #    #    #     #    #     #####  ####### ######
+#       ##   ## #     # #       #     #  #   #  #       #          ##   ##   # #   ##    #   # #   #     # #       #     #
+#       # # # # #     # #       #     #   # #   #       #          # # # #  #   #  # #   #  #   #  #       #       #     #
+#####   #  #  # ######  #       #     #    #    #####   #####      #  #  # #     # #  #  # #     # #  #### #####   ######
+#       #     # #       #       #     #    #    #       #          #     # ####### #   # # ####### #     # #       #   #
+#       #     # #       #       #     #    #    #       #          #     # #     # #    ## #     # #     # #       #    #
+####### #     # #       ####### #######    #    ####### #######    #     # #     # #     # #     #  #####  ####### #     #
+`
+);
 // function to start app
 function startApp() {
   inquirer
