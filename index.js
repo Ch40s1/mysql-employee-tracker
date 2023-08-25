@@ -8,12 +8,16 @@ require('dotenv').config();
 const dbConnection = mysql.createConnection({
   host: 'localhost',
   user: 'root',
+  /////////////////////////////////////
+  // PUT PASSWORD HERE |
+  //                   v
   password: process.env.db_password,
+  /////////////////////////////////////
   database: 'employee_db'
 });
 
 console.log(
-`
+  `
   ####### #     # ######  #       ####### #     # ####### #######    #     #    #    #     #    #     #####  ####### ######
 #       ##   ## #     # #       #     #  #   #  #       #          ##   ##   # #   ##    #   # #   #     # #       #     #
 #       # # # # #     # #       #     #   # #   #       #          # # # #  #   #  # #   #  #   #  #       #       #     #
@@ -39,7 +43,7 @@ function startApp() {
         'Add an employee',
         'Delete a Role',
         // 'Delete an employee',
-        // 'Delete a department',
+        'Delete a department',
         'Update an employee role',
         'Exit'
       ]
@@ -71,9 +75,9 @@ function startApp() {
         // case 'Delete an employee':
         //   deleteEmployee();
         //   break;
-        // case 'Delete a department':
-        //   deleteDepartment();
-        //   break;
+        case 'Delete a department':
+          deleteDepartment();
+          break;
         case 'Update an employee role':
           updateEmployeeRole();
           break;
@@ -94,17 +98,8 @@ function viewAllDepartments() {
       console.error(err); // Log the error
       return;
     }
-
     // Display the departments using console.table
     console.table(results);
-
-    // Assuming you want to perform some further actions after displaying the results
-    // You can call another function here or handle any other logic
-
-    // Close the database connection if needed
-    // dbConnection.end();
-
-    // If you want to continue the application flow, you can call another function or exit appropriately
     startApp();
   });
 }
@@ -161,46 +156,70 @@ function viewAllEmployees() {
 
 
 function addDepartment() {
-  // asks questions needed for the values
-  inquirer
-    .prompt([
-      {
-        name: 'departmentId',
-        type: 'input',
-        message: 'Enter the department ID:',
-        // makes sure that the id is a converted into an integer and if we typed a valid id number
-        validate: input => {
-          if (Number.isInteger(parseInt(input)) && parseInt(input) > 0) {
-            return true;
-          }
-          return 'Please enter a valid positive integer for the department ID.';
-        }
-      },
-      {
-        name: 'departmentName',
-        type: 'input',
-        message: 'Enter the name of the department:',
-        // makes sure there is no empty string
-        validate: input => {
-          if (input.trim() !== '') {
-            return true;
-          }
-          return 'Please enter a valid department name.';
-        }
-      }
-    ])
-    .then(answers => {
-      const departmentId = parseInt(answers.departmentId);
-      const departmentName = answers.departmentName;
+  // Get the maximum department ID from the department table
+  const maxDepartmentIdQuery = 'SELECT MAX(id) as maxDepartmentId FROM department';
+  dbConnection.query(maxDepartmentIdQuery, (err, maxDepartmentIdResult) => {
+    if (err) throw err;
 
-      // acts like the seeds,sql and adds the values to the data
-      dbConnection.query('INSERT INTO department (id, department_name) VALUES (?, ?)', [departmentId, departmentName], (err, result) => {
-        if (err) throw err;
-        console.log(`Department "${departmentName}" with ID ${departmentId} added successfully!`);
-        startApp();
+    //Calculat the new department id based on the maximum department ID
+    const maxDepartmentId = maxDepartmentIdResult[0].maxDepartmentId || 0;
+    const newDepartmentId = maxDepartmentId + 1;
+
+    inquirer
+      .prompt([
+        {
+          name: 'departmentName',
+          type: 'input',
+          message: 'Enter the name of the department:',
+          validate: input => {
+            if (input.trim() !== '') {
+              return true;
+            }
+            return 'Please enter a valid department name.';
+          }
+        }
+      ])
+      .then(answers => {
+        const departmentName = answers.departmentName;
+
+        // Insert the new department data into the department table
+        dbConnection.query('INSERT INTO department (id, department_name) VALUES (?, ?)', [newDepartmentId, departmentName], (err, result) => {
+          if (err) throw err;
+          console.log(`Department "${departmentName}" with ID ${newDepartmentId} added successfully!`);
+          startApp();
+        });
       });
-    });
+  });
 }
+
+
+function deleteDepartment() {
+  // Get the list of departments
+  const departmentQuery = 'SELECT * FROM department';
+  dbConnection.query(departmentQuery, (err, departments) => {
+    if (err) throw err;
+
+    inquirer
+      .prompt([
+        {
+          name: 'departmentToDelete',
+          type: 'list',
+          message: 'Select the department to delete:',
+          choices: departments.map(department => `${department.id} - ${department.department_name}`)
+        }
+      ])
+      .then(answer => {
+        const departmentIdToDelete = parseInt(answer.departmentToDelete.split(' ')[0]);
+
+        // Delete the department from the department table
+        dbConnection.query('DELETE FROM department WHERE id = ?', [departmentIdToDelete], (err, result) => {
+          if (err) throw err;
+          startApp();
+        });
+      });
+  });
+}
+
 
 function addRole() {
   // Get the list of departments
@@ -343,7 +362,7 @@ function addEmployee() {
           },
           {
             name: 'employeeRole',
-            type: 'list', // Change type to 'list' for selection from a list
+            type: 'list',
             message: 'Select the employee\'s role:',
             choices: roles.map(role => ({ name: role.title, value: role.id })) // Mapping roles to choices
           },
