@@ -19,6 +19,7 @@ function startApp() {
         'View all roles',
         'View all employees',
         'Add a department',
+        'Delete a Role',
         'Add a role',
         'Add an employee',
         'Update an employee role',
@@ -42,6 +43,9 @@ function startApp() {
           break;
         case 'Add a role':
           addRole();
+          break;
+        case 'Delete a Role':
+          deleteRole();
           break;
         case 'Add an employee':
           addEmployee();
@@ -73,8 +77,15 @@ function viewAllDepartments() {
 }
 
 function viewAllRoles() {
-  dbConnection.query('SELECT * FROM role', (err, results) => {
+  const query = `
+    SELECT role.id, role.title, department.department_name, role.salary
+    FROM role
+    JOIN department ON role.department_id = department.id
+  `;
+
+  dbConnection.query(query, (err, results) => {
     if (err) throw err;
+    // displays the database in a organized table form
     console.table(results.map(result => ({
       id: result.id,
       title: result.title,
@@ -87,23 +98,34 @@ function viewAllRoles() {
   });
 }
 
-
 function viewAllEmployees() {
-  dbConnection.query('SELECT * FROM employee', (err, results) => {
+  // this selects various information about the employee, their roles, departments and manager names
+  const query = `
+    SELECT e.id, e.first_name, e.last_name, r.title, d.department_name, r.salary, IFNULL(e.manager_name, 'null') AS manager_name
+    FROM employee e
+    INNER JOIN role r ON e.role_id = r.id
+    INNER JOIN department d ON r.department_id = d.id
+  `;
+  // handle the results
+  dbConnection.query(query, (err, results) => {
     if (err) throw err;
-
+    // displa the results in a formatted table usign the console.table
     console.table(results.map(result => ({
       id: result.id,
       first_name: result.first_name,
       last_name: result.last_name,
-      role_id: result.role_id,
-      manager_id: result.manager_id
+      title: result.title,
+      department_name: result.department_name,
+      salary: result.salary,
+      manager_name: result.manager_name
     })));
 
-    // Start the app again
+    // after displaying the results then restart the app
     startApp();
   });
 }
+
+
 
 function addDepartment() {
   // asks questions needed for the values
@@ -148,148 +170,258 @@ function addDepartment() {
 }
 
 function addRole() {
-  // Ask questions to gather role information
-  inquirer
-    .prompt([
-      {
-        name: 'roleId',
-        type: 'input',
-        message: 'Enter the role ID:',
-        validate: input => {
-          if (Number.isInteger(parseInt(input)) && parseInt(input) > 0) {
-            return true;
-          }
-          return 'Please enter a valid positive integer for the role ID.';
-        }
-      },
-      {
-        name: 'roleTitle',
-        type: 'input',
-        message: 'Enter the title of the role:',
-        validate: input => {
-          if (input.trim() !== '') {
-            return true;
-          }
-          return 'Please enter a valid role title.';
-        }
-      },
-      {
-        name: 'roleDepartment',
-        type: 'input',
-        message: 'Enter the department name for the role:',
-        validate: input => {
-          if (input.trim() !== '') {
-            return true;
-          }
-          return 'Please enter a valid department name.';
-        }
-      },
-      {
-        name: 'roleSalary',
-        type: 'input',
-        message: 'Enter the salary for the role:',
-        validate: input => {
-          if (!isNaN(parseFloat(input)) && parseFloat(input) >= 0) {
-            return true;
-          }
-          return 'Please enter a valid non-negative number for the salary.';
-        }
-      }
-    ])
-    .then(answers => {
-      const roleId = parseInt(answers.roleId);
-      const roleTitle = answers.roleTitle;
-      const roleSalary = parseFloat(answers.roleSalary);
-      const roleDepartment = answers.roleDepartment;
+  // Get the list of departments
+  const departmentQuery = 'SELECT * FROM department';
+  dbConnection.query(departmentQuery, (err, departments) => {
+    if (err) throw err;
 
-      // Insert the new role data into the role table
-      dbConnection.query('INSERT INTO role (id, title, department_name, salary) VALUES (?, ?, ?, ?)', [roleId, roleTitle, roleDepartment, roleSalary,], (err, result) => {
-        if (err) throw err;
-        //console.log(`Role "${roleTitle}" with ID ${roleId} added successfully!`);
-        startApp();
-      });
+    // Get the maximum id from the role table
+    const maxRoleIdQuery = 'SELECT MAX(id) as maxRoleId FROM role';
+    dbConnection.query(maxRoleIdQuery, (err, maxRoleIdResult) => {
+      if (err) throw err;
+
+      const maxRoleId = maxRoleIdResult[0].maxRoleId;
+      const newRoleId = maxRoleId + 1;
+
+      inquirer
+        .prompt([
+          {
+            name: 'roleTitle',
+            type: 'input',
+            message: 'Enter the title of the role:',
+            validate: input => {
+              if (input.trim() !== '') {
+                return true;
+              }
+              return 'Please enter a valid role title.';
+            }
+          },
+          {
+            name: 'roleSalary',
+            type: 'input',
+            message: 'Enter the salary for the role:',
+            validate: input => {
+              if (!isNaN(parseFloat(input)) && parseFloat(input) >= 0) {
+                return true;
+              }
+              return 'Please enter a valid non-negative number for the salary.';
+            }
+          },
+          {
+            name: 'departmentName',
+            type: 'list',
+            message: 'Select the department for the role:',
+            choices: departments.map(department => department.department_name)
+          }
+        ])
+        .then(answers => {
+          const roleTitle = answers.roleTitle;
+          const roleSalary = parseFloat(answers.roleSalary);
+          const departmentName = answers.departmentName;
+
+          // Get the department ID based on the selected department name
+          const departmentId = departments.find(department => department.department_name === departmentName).id;
+
+          // Insert the new role data into the role table
+          dbConnection.query('INSERT INTO role (id, title, department_id, salary) VALUES (?, ?, ?, ?)', [newRoleId, roleTitle, departmentId, roleSalary], (err, result) => {
+            if (err) throw err;
+            console.log(`Role "${roleTitle}" with ID ${newRoleId} added successfully!`);
+            startApp();
+          });
+        });
     });
+  });
 }
+function deleteRole() {
+  // Get the list of roles
+  const roleQuery = 'SELECT * FROM role';
+  dbConnection.query(roleQuery, (err, roles) => {
+    if (err) throw err;
+
+    inquirer
+      .prompt([
+        {
+          name: 'roleToDelete',
+          type: 'list',
+          message: 'Select the role to delete:',
+          choices: roles.map(role => `${role.id} - ${role.title}`)
+        }
+      ])
+      .then(answer => {
+        const roleIdToDelete = parseInt(answer.roleToDelete.split(' ')[0]);
+
+        // Delete the role from the role table
+        dbConnection.query('DELETE FROM role WHERE id = ?', [roleIdToDelete], (err, result) => {
+          if (err) throw err;
+          console.log(`Role with ID ${roleIdToDelete} deleted successfully!`);
+          startApp();
+        });
+      });
+  });
+}
+
 
 function addEmployee() {
-  inquirer
-    .prompt([
-      {
-        name: 'employeeId',
-        type: 'input',
-        validate: input => {
-          if (Number.isInteger(parseInt(input)) && parseInt(input) > 0) {
-            return true;
-          }
-          return 'Please enter a valid positive integer for the ID.';
-        }
-      },
-      {
-        name: 'employeeFirstName',
-        type: 'input',
-        message: 'Enter the employee first name:',
-        validate: input => {
-          if (input.trim() !== '') {
-            return true;
-          }
-          return 'Please enter a valid first name.';
-        }
-      },
-      {
-        name: 'employeeLastName',
-        type: 'input',
-        message: 'Enter the employee last name:',
-        validate: input => {
-          if (input.trim() !== '') {
-            return true;
-          }
-          return 'Please enter a valid last name.';
-        }
-      },
-      {
-        name: 'employeeRole',
-        type: 'input',
-        message: 'Enter the employee\'s role ID:',
-        validate: input => {
-          if (Number.isInteger(parseInt(input)) && parseInt(input) > 0) {
-            return true;
-          }
-          return 'Please enter a valid positive integer for the role ID.';
-        }
-      },
-      {
-        name: 'employeeManager',
-        type: 'input',
-        message: 'Enter the manager\'s name:',
-        validate: input => {
-          if (input.trim() !== '') {
-            return true;
-          }
-          return 'Please enter a name.';
-        }
-      }
-    ])
-    .then(answers => {
-      const employeeId = parseInt(answers.employeeId);
-      const employeeFirstName = answers.employeeFirstName;
-      const employeeLastName = answers.employeeLastName;
-      const employeeRole = parseInt(answers.employeeRole);
-      const employeeManager = answers.employeeManager;
+  // these are predefined managers
+  const predefinedManagers = [
+    'Robert Blo',
+    'Doe Jane',
+    'Chris Doe',
+  ];
+  // sql retrives manager names from the employee table
+  const managerQuery = 'SELECT DISTINCT manager_name FROM employee WHERE manager_name IS NOT NULL';
 
-      // Insert the new employee data into the employee table
-      dbConnection.query('INSERT INTO employee (id, first_name, last_name, role_id, manager_name) VALUES (?, ?, ?, ?, ?)', [employeeId, employeeFirstName, employeeLastName, employeeRole, employeeManager], (err, result) => {
-        if (err) throw err;
-        console.log(`Employee "${employeeFirstName} ${employeeLastName}" with ID ${employeeId} added successfully!`);
-        startApp();
-      });
+  // gets existing manager names from the database
+  dbConnection.query(managerQuery, (err, managerResults) => {
+    if (err) throw err;
+    // take existing manager names from the query results
+    const databaseManagers = managerResults.map(result => result.manager_name);
+    const allManagers = [...predefinedManagers, ...databaseManagers];
+    // combine managers and database managers
+    const roleQuery = 'SELECT * FROM role';
+    dbConnection.query(roleQuery, (err, roles) => {
+      if (err) throw err;
+
+      inquirer
+        .prompt([
+          {
+            name: 'employeeFirstName',
+            type: 'input',
+            message: 'Enter the employee first name:',
+            validate: input => {
+              if (input.trim() !== '') {
+                return true;
+              }
+              return 'Please enter a valid first name.';
+            }
+          },
+          {
+            name: 'employeeLastName',
+            type: 'input',
+            message: 'Enter the employee last name:',
+            validate: input => {
+              if (input.trim() !== '') {
+                return true;
+              }
+              return 'Please enter a valid last name.';
+            }
+          },
+          {
+            name: 'employeeRoleId',
+            type: 'input',
+            message: 'Enter the employee\'s role ID:',
+            validate: input => {
+              const roleId = parseInt(input);
+              const validRole = roles.find(role => role.id === roleId);
+              if (validRole) {
+                return true;
+              }
+              return 'Please enter a valid role ID.';
+            }
+          },
+          {
+            name: 'employeeManager',
+            type: 'list',
+            message: 'Select the employee\'s manager:',
+            choices: allManagers
+          }
+        ])
+        .then(answer => {
+          // extract user info
+          const employeeFirstName = answer.employeeFirstName;
+          const employeeLastName = answer.employeeLastName;
+          const employeeRoleId = parseInt(answer.employeeRoleId);
+          const employeeManager = answer.employeeManager;
+
+          // fing the selected role based on the provided role id
+          const selectedRole = roles.find(role => role.id === employeeRoleId);
+
+          // get info about the selected role
+          const role_id = selectedRole.id;
+          const title = selectedRole.title;
+          const department_name = selectedRole.department_name;
+          const salary = selectedRole.salary;
+
+          // query to retrieve the maximum employee id from tthe employee table
+          const maxEmployeeIdQuery = 'SELECT MAX(id) as maxEmployeeId FROM employee';
+          dbConnection.query(maxEmployeeIdQuery, (err, maxEmployeeIdResult) => {
+            if (err) throw err;
+
+            //calculate the new employee id based on the maximum emplyee id
+            const maxEmployeeId = maxEmployeeIdResult[0].maxEmployeeId;
+            const newEmployeeId = maxEmployeeId + 1;
+
+            // insert the new emplyee information into the employee table
+            dbConnection.query('INSERT INTO employee (id, first_name, last_name, role_id, manager_name) VALUES (?, ?, ?, ?, ?)', [newEmployeeId, employeeFirstName, employeeLastName, role_id, employeeManager], (err, result) => {
+              if (err) throw err;
+
+              // display a success message and the information of the new employee
+              console.log(`Employee "${employeeFirstName} ${employeeLastName}" added successfully!\n`);
+              console.table([{
+                id: newEmployeeId,
+                first_name: employeeFirstName,
+                last_name: employeeLastName,
+                title: title,
+                department_name: department_name,
+                salary: salary,
+                manager_id: employeeManager
+              }]);
+
+              startApp();
+            });
+          });
+        });
     });
+  });
 }
-
-
 
 function updateEmployeeRole() {
+  const employeeQuery = 'SELECT id, first_name, last_name FROM employee';
+  const roleQuery = 'SELECT id, title FROM role';
 
+  dbConnection.query(employeeQuery, (err, employees) => {
+    if (err) throw err;
+
+    dbConnection.query(roleQuery, (err, roles) => {
+      if (err) throw err;
+
+      inquirer
+        .prompt([
+          {
+            name: 'employeeId',
+            type: 'list',
+            message: 'Select the employee to update:',
+            choices: employees.map(employee => ({
+              name: `${employee.first_name} ${employee.last_name}`,
+              value: employee.id
+            }))
+          },
+          {
+            // this looks for the role value using the role id
+            name: 'newRoleId',
+            type: 'list',
+            message: 'Select the new role for the employee:',
+            choices: roles.map(role => ({
+              name: role.title,
+              value: role.id
+            }))
+          }
+        ])
+        .then(answer => {
+          const employeeId = answer.employeeId;
+          const newRoleId = answer.newRoleId;
+
+          // updates the employee role using the role id.
+          dbConnection.query('UPDATE employee SET role_id = ? WHERE id = ?', [newRoleId, employeeId], (err, result) => {
+            if (err) throw err;
+            console.log('Employee role updated successfully!\n');
+            startApp();
+          });
+        });
+    });
+  });
 }
+
 
 // Call the function to start the application
 startApp();
