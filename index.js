@@ -75,13 +75,7 @@ function viewAllDepartments() {
   // creates a connection to the mysql server and selects all from the department in employee.db
   dbConnection.query('SELECT * FROM department', (err, results) => {
     if (err) throw err;
-    // this is for the looks
-    console.log('id  department_name');
-    console.log('--  ---------------');
-    // this so that it looks like the '--' are folling the values
-    results.forEach(result => {
-      console.log(`${result.id.toString().padStart(2)}   ${result.department_name}`);
-    });
+      console.table(results);
     // starts the app again
     startApp();
   });
