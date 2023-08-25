@@ -2,7 +2,7 @@
 
 For more information on MIT visit https://opensource.org/licenses/MIT
 
-# mysql-employee-tracker
+# Employee Manager
 This Employee Management App is a command-line application built using Node.js, Inquirer, and MySQL. The primary goal of this application is to provide an efficient way for developers to manage a company's employee database. It accomplishes this by offering a user-friendly interface to interact with and manipulate the database's information, all from the command line.
 
 ## Table of Contents
